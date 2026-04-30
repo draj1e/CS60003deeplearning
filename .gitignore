@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+EuroSAT_RGB/
+hw1.pdf
+outputs/models/
+outputs/history/
+*.npz

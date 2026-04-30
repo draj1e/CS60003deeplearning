@@ -1,0 +1,82 @@
+[
+  {
+    "run_name": "search_001_h128-64_lr0.05_wd0.0001_relu",
+    "hidden_dims": "128,64",
+    "lr": 0.05,
+    "weight_decay": 0.0001,
+    "activation": "relu",
+    "best_epoch": 8,
+    "best_val_acc": 0.3558024691358025,
+    "best_model": "outputs/models/search_001_h128-64_lr0.05_wd0.0001_relu_best.npz"
+  },
+  {
+    "run_name": "search_002_h128-64_lr0.05_wd0.001_relu",
+    "hidden_dims": "128,64",
+    "lr": 0.05,
+    "weight_decay": 0.001,
+    "activation": "relu",
+    "best_epoch": 8,
+    "best_val_acc": 0.36271604938271607,
+    "best_model": "outputs/models/search_002_h128-64_lr0.05_wd0.001_relu_best.npz"
+  },
+  {
+    "run_name": "search_003_h128-64_lr0.01_wd0.0001_relu",
+    "hidden_dims": "128,64",
+    "lr": 0.01,
+    "weight_decay": 0.0001,
+    "activation": "relu",
+    "best_epoch": 8,
+    "best_val_acc": 0.6128395061728396,
+    "best_model": "outputs/models/search_003_h128-64_lr0.01_wd0.0001_relu_best.npz"
+  },
+  {
+    "run_name": "search_004_h128-64_lr0.01_wd0.001_relu",
+    "hidden_dims": "128,64",
+    "lr": 0.01,
+    "weight_decay": 0.001,
+    "activation": "relu",
+    "best_epoch": 8,
+    "best_val_acc": 0.5977777777777777,
+    "best_model": "outputs/models/search_004_h128-64_lr0.01_wd0.001_relu_best.npz"
+  },
+  {
+    "run_name": "search_005_h256-128_lr0.05_wd0.0001_relu",
+    "hidden_dims": "256,128",
+    "lr": 0.05,
+    "weight_decay": 0.0001,
+    "activation": "relu",
+    "best_epoch": 7,
+    "best_val_acc": 0.11259259259259259,
+    "best_model": "outputs/models/search_005_h256-128_lr0.05_wd0.0001_relu_best.npz"
+  },
+  {
+    "run_name": "search_006_h256-128_lr0.05_wd0.001_relu",
+    "hidden_dims": "256,128",
+    "lr": 0.05,
+    "weight_decay": 0.001,
+    "activation": "relu",
+    "best_epoch": 7,
+    "best_val_acc": 0.5160493827160494,
+    "best_model": "outputs/models/search_006_h256-128_lr0.05_wd0.001_relu_best.npz"
+  },
+  {
+    "run_name": "search_007_h256-128_lr0.01_wd0.0001_relu",
+    "hidden_dims": "256,128",
+    "lr": 0.01,
+    "weight_decay": 0.0001,
+    "activation": "relu",
+    "best_epoch": 7,
+    "best_val_acc": 0.6197530864197531,
+    "best_model": "outputs/models/search_007_h256-128_lr0.01_wd0.0001_relu_best.npz"
+  },
+  {
+    "run_name": "search_008_h256-128_lr0.01_wd0.001_relu",
+    "hidden_dims": "256,128",
+    "lr": 0.01,
+    "weight_decay": 0.001,
+    "activation": "relu",
+    "best_epoch": 8,
+    "best_val_acc": 0.6298765432098765,
+    "best_model": "outputs/models/search_008_h256-128_lr0.01_wd0.001_relu_best.npz"
+  }
+]

@@ -1,0 +1,9 @@
+run_name,hidden_dims,lr,weight_decay,activation,best_epoch,best_val_acc,best_model
+search_001_h128-64_lr0.05_wd0.0001_relu,"128,64",0.05,0.0001,relu,8,0.3558024691358025,outputs/models/search_001_h128-64_lr0.05_wd0.0001_relu_best.npz
+search_002_h128-64_lr0.05_wd0.001_relu,"128,64",0.05,0.001,relu,8,0.36271604938271607,outputs/models/search_002_h128-64_lr0.05_wd0.001_relu_best.npz
+search_003_h128-64_lr0.01_wd0.0001_relu,"128,64",0.01,0.0001,relu,8,0.6128395061728396,outputs/models/search_003_h128-64_lr0.01_wd0.0001_relu_best.npz
+search_004_h128-64_lr0.01_wd0.001_relu,"128,64",0.01,0.001,relu,8,0.5977777777777777,outputs/models/search_004_h128-64_lr0.01_wd0.001_relu_best.npz
+search_005_h256-128_lr0.05_wd0.0001_relu,"256,128",0.05,0.0001,relu,7,0.11259259259259259,outputs/models/search_005_h256-128_lr0.05_wd0.0001_relu_best.npz
+search_006_h256-128_lr0.05_wd0.001_relu,"256,128",0.05,0.001,relu,7,0.5160493827160494,outputs/models/search_006_h256-128_lr0.05_wd0.001_relu_best.npz
+search_007_h256-128_lr0.01_wd0.0001_relu,"256,128",0.01,0.0001,relu,7,0.6197530864197531,outputs/models/search_007_h256-128_lr0.01_wd0.0001_relu_best.npz
+search_008_h256-128_lr0.01_wd0.001_relu,"256,128",0.01,0.001,relu,8,0.6298765432098765,outputs/models/search_008_h256-128_lr0.01_wd0.001_relu_best.npz

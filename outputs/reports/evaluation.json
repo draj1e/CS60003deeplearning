@@ -1,0 +1,199 @@
+{
+  "test_accuracy": 0.6503703703703704,
+  "class_names": [
+    "AnnualCrop",
+    "Forest",
+    "HerbaceousVegetation",
+    "Highway",
+    "Industrial",
+    "Pasture",
+    "PermanentCrop",
+    "Residential",
+    "River",
+    "SeaLake"
+  ],
+  "confusion_matrix": [
+    [
+      292,
+      2,
+      24,
+      21,
+      7,
+      8,
+      51,
+      17,
+      21,
+      7
+    ],
+    [
+      0,
+      375,
+      7,
+      1,
+      0,
+      18,
+      0,
+      0,
+      1,
+      48
+    ],
+    [
+      43,
+      7,
+      231,
+      36,
+      3,
+      6,
+      60,
+      42,
+      14,
+      8
+    ],
+    [
+      39,
+      2,
+      24,
+      139,
+      11,
+      13,
+      30,
+      43,
+      68,
+      6
+    ],
+    [
+      7,
+      0,
+      1,
+      17,
+      304,
+      0,
+      2,
+      39,
+      5,
+      0
+    ],
+    [
+      4,
+      20,
+      18,
+      2,
+      0,
+      227,
+      4,
+      3,
+      20,
+      2
+    ],
+    [
+      66,
+      3,
+      41,
+      20,
+      11,
+      13,
+      174,
+      22,
+      24,
+      1
+    ],
+    [
+      9,
+      0,
+      31,
+      40,
+      40,
+      1,
+      17,
+      286,
+      24,
+      2
+    ],
+    [
+      22,
+      11,
+      11,
+      45,
+      4,
+      16,
+      4,
+      7,
+      246,
+      9
+    ],
+    [
+      4,
+      36,
+      4,
+      0,
+      1,
+      14,
+      1,
+      13,
+      17,
+      360
+    ]
+  ],
+  "error_examples": [
+    {
+      "path": "EuroSAT_RGB/Highway/Highway_116.jpg",
+      "true": "Highway",
+      "pred": "River"
+    },
+    {
+      "path": "EuroSAT_RGB/PermanentCrop/PermanentCrop_534.jpg",
+      "true": "PermanentCrop",
+      "pred": "AnnualCrop"
+    },
+    {
+      "path": "EuroSAT_RGB/AnnualCrop/AnnualCrop_288.jpg",
+      "true": "AnnualCrop",
+      "pred": "Residential"
+    },
+    {
+      "path": "EuroSAT_RGB/Forest/Forest_1992.jpg",
+      "true": "Forest",
+      "pred": "SeaLake"
+    },
+    {
+      "path": "EuroSAT_RGB/Highway/Highway_622.jpg",
+      "true": "Highway",
+      "pred": "PermanentCrop"
+    },
+    {
+      "path": "EuroSAT_RGB/Pasture/Pasture_1369.jpg",
+      "true": "Pasture",
+      "pred": "Forest"
+    },
+    {
+      "path": "EuroSAT_RGB/River/River_878.jpg",
+      "true": "River",
+      "pred": "AnnualCrop"
+    },
+    {
+      "path": "EuroSAT_RGB/Highway/Highway_2242.jpg",
+      "true": "Highway",
+      "pred": "AnnualCrop"
+    },
+    {
+      "path": "EuroSAT_RGB/AnnualCrop/AnnualCrop_2024.jpg",
+      "true": "AnnualCrop",
+      "pred": "Residential"
+    },
+    {
+      "path": "EuroSAT_RGB/Forest/Forest_260.jpg",
+      "true": "Forest",
+      "pred": "SeaLake"
+    },
+    {
+      "path": "EuroSAT_RGB/HerbaceousVegetation/HerbaceousVegetation_1554.jpg",
+      "true": "HerbaceousVegetation",
+      "pred": "Residential"
+    },
+    {
+      "path": "EuroSAT_RGB/Highway/Highway_2326.jpg",
+      "true": "Highway",
+      "pred": "HerbaceousVegetation"
+    }
+  ]
+}
