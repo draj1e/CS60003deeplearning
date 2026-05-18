@@ -11,8 +11,8 @@
 - [x] 任务 (2) 超参数分析 → §5.2
 - [x] 任务 (3) 预训练消融 → §5.3
 - [x] 任务 (4) 注意力机制 → §5.4
-- [ ] **GitHub repo 链接**：⚠️ 待填写（提交前补：`https://github.com/<user>/<repo>`）
-- [ ] **模型权重网盘地址**：⚠️ 待填写（提交前补：百度云/Google Drive）
+- [x] **GitHub repo 链接**：<https://github.com/draj1e/CS60003deeplearning> （HW2 内容位于 [`hw2/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2) 子目录）
+- [x] **模型权重网盘地址**：<https://pan.baidu.com/s/1_SVen8Jpwpx2-HYKtRuO8A?pwd=6666> （提取码：`6666`）
 - [ ] **小组成员姓名 / 学号 / 分工**：⚠️ 待填写（见 §1）
 
 ---
@@ -233,11 +233,16 @@ swanlab watch swanlog       # 浏览器开 http://127.0.0.1:5092
 
 ## 9. 代码与权重
 
-- **GitHub repo**：⚠️ `<提交前填写 public repo URL>`
-- **模型权重网盘**：⚠️ `<提交前填写百度云/Google Drive 链接>`
-  - `best_baseline_best.pt`（grid 最优 baseline，~44 MB）
+- **GitHub repo**：<https://github.com/draj1e/CS60003deeplearning>
+  - HW2 内容位于 [`hw2/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2) 子目录
+  - Task 1 完整材料位于 [`hw2/task1/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2/task1)
+- **模型权重网盘**：<https://pan.baidu.com/s/1_SVen8Jpwpx2-HYKtRuO8A?pwd=6666>
+  - 提取码：**`6666`**
+  - 文件：`hw2_task1_weights_swanlog.tar.gz`（200 MB，含 5 个 `.pt` + swanlab 原始日志 + MANIFEST.txt）
+  - `best_baseline_best.pt`（grid 最优 baseline，~44 MB，test acc 0.8920）
+  - `best_baseline_pretrained.pt`（baseline v1）
   - `best_scratch.pt`（消融对照）
+  - `best_se_pretrained.pt`（SE v1）
   - `best_se_pretrained_v2_cosine.pt`（SE-ResNet18 最终版本）
-  - 其余 grid 9 个 ckpt 与 SE v1 ckpt 位于 `outputs/classification_grid/`、`outputs/classification/`，按需上传
 
 技术原理与设计选择的详细讲解见 [`EXPLAINED.md`](EXPLAINED.md)。

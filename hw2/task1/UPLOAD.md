@@ -163,17 +163,17 @@ swanlab watch swanlog
 
 ---
 
-## 4. 把链接填进报告的位置
+## 4. 已填好的链接（提交前的最后核对）
 
-打开 `task1/REPORT.md`，找到这两处占位符并替换：
+`task1/REPORT.md` 已经写入：
 
 | 位置 | 内容 |
 | --- | --- |
-| §0 checklist 倒数 2-3 行 | `GitHub repo 链接` / `模型权重网盘地址` |
-| §9 代码与权重 | `<提交前填写 public repo URL>` / `<提交前填写百度云/Google Drive 链接>` |
-| §1 小组信息表 | 姓名 / 学号 / 分工 |
+| §0 checklist & §9 | GitHub: <https://github.com/draj1e/CS60003deeplearning>（HW2 在 `hw2/` 子目录） |
+| §0 checklist & §9 | 百度云: <https://pan.baidu.com/s/1_SVen8Jpwpx2-HYKtRuO8A?pwd=6666> （提取码 `6666`） |
+| §1 小组信息表 | ⚠️ 仍需手动填写 姓名 / 学号 / 分工 |
 
-填完直接 `pandoc task1/REPORT.md -o task1/REPORT.pdf --pdf-engine=xelatex -V mainfont="Noto Sans CJK SC"` 转 PDF 提交即可。
+填完组员信息后直接 `pandoc task1/REPORT.md -o task1/REPORT.pdf --pdf-engine=xelatex -V mainfont="Noto Sans CJK SC"` 转 PDF 提交。
 
 ---
 
