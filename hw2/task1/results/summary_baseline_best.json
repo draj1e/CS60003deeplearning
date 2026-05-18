@@ -1,0 +1,18 @@
+{
+  "run_name": "grid_h3e-3_b1e-4",
+  "variant": "baseline_pretrained",
+  "arch": "resnet18",
+  "pretrained": true,
+  "attention": "none",
+  "epochs": 30,
+  "batch_size": 32,
+  "lr_backbone": 0.0001,
+  "lr_head": 0.003,
+  "weight_decay": 0.0001,
+  "scheduler": "none",
+  "best_val_acc": 0.9186274514478796,
+  "test_loss": 0.4265391655745805,
+  "test_acc": 0.8920149617824037,
+  "duration_sec": 133.60980319976807,
+  "checkpoint": "outputs/classification_grid/best_grid_h3e-3_b1e-4.pt"
+}

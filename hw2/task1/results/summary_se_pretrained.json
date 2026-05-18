@@ -1,0 +1,6 @@
+{
+  "best_val_acc": 0.8892156895469217,
+  "test_loss": 0.579042941307024,
+  "test_acc": 0.8568872987477638,
+  "checkpoint": "outputs/classification/best_se_pretrained.pt"
+}

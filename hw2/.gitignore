@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pt
+*.pth
+*.onnx
+*.engine
+*.tar.gz
+*.zip
+runs/
+outputs/
+data/
+wandb/
+swanlog/
+task1/upload/
+.DS_Store

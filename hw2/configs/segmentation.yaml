@@ -1,0 +1,12 @@
+seed: 42
+data_root: data/stanford_background_raw
+output_dir: outputs/segmentation
+num_classes: 9
+image_size: [240, 320]
+batch_size: 8
+epochs: 40
+learning_rate: 0.001
+weight_decay: 0.0001
+num_workers: 4
+loss: ce
+amp: true

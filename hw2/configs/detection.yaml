@@ -1,0 +1,14 @@
+seed: 42
+data_root: data/road_vehicle_raw/trafic_data
+output_dir: outputs/detection
+yolo_dataset_yaml: data/road_vehicle_raw/trafic_data/dataset.yaml
+base_model: yolov8n.pt
+epochs: 50
+image_size: 640
+batch_size: 16
+video_path: data/videos/test.mp4
+tracker: bytetrack.yaml
+line: [100, 360, 1180, 360]
+conf: 0.25
+iou: 0.5
+occlusion_frames: []

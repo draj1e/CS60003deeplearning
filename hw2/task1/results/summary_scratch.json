@@ -1,0 +1,6 @@
+{
+  "best_val_acc": 0.41960784372161414,
+  "test_loss": 3.127136019530927,
+  "test_acc": 0.36753943731657257,
+  "checkpoint": "outputs/classification/best_scratch.pt"
+}

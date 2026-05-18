@@ -1,0 +1,18 @@
+{
+  "run_name": "se_pretrained_v2_cosine",
+  "variant": "se_pretrained",
+  "arch": "resnet18",
+  "pretrained": true,
+  "attention": "se",
+  "epochs": 30,
+  "batch_size": 32,
+  "lr_backbone": 0.0001,
+  "lr_head": 0.003,
+  "weight_decay": 0.0001,
+  "scheduler": "cosine",
+  "best_val_acc": 0.899019608778112,
+  "test_loss": 0.515405489244191,
+  "test_acc": 0.869897544316149,
+  "duration_sec": 132.81025528907776,
+  "checkpoint": "outputs/classification_se_v2/best_se_pretrained_v2_cosine.pt"
+}

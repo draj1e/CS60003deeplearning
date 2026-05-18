@@ -1,0 +1,17 @@
+seed: 42
+data_root: data/flowers102
+output_dir: outputs/classification
+arch: resnet18
+variant: baseline_pretrained
+num_classes: 102
+pretrained: true
+attention: none
+image_size: 224
+batch_size: 32
+epochs: 30
+lr_backbone: 0.0001
+lr_head: 0.001
+weight_decay: 0.0001
+num_workers: 4
+amp: true
+tracker: none

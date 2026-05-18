@@ -1,0 +1,4 @@
+variant,best_val_acc,test_acc,test_loss,checkpoint
+baseline_pretrained,0.9117647079860463,0.8838835583021629,0.5050974098814369,outputs/classification/best_baseline_pretrained.pt
+scratch,0.41960784372161414,0.36753943731657257,3.127136019530927,outputs/classification/best_scratch.pt
+se_pretrained,0.8892156895469217,0.8568872987477638,0.579042941307024,outputs/classification/best_se_pretrained.pt
