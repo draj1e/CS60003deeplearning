@@ -40,8 +40,8 @@ task1/
 | 子项 | 状态 | 关键指标 |
 | --- | :---: | --- |
 | (1) Baseline 预训练微调 | ✅ | ResNet-18 + ImageNet 预训练，head 3e-3 / bb 1e-4，30 epoch |
-| (2) 超参数分析 | ✅ | 9 组 lr_head × lr_backbone 网格，最优 val=0.9186 |
-| (3) 预训练 vs 随机初始化消融 | ✅ | +52.5 pct test acc 提升 |
+| (2) 超参数分析 | ✅ | 9 组 lr_head × lr_backbone 网格（初版增广），最优 val=0.9186；最优超参在最终增广下复跑 val=0.9284 |
+| (3) 预训练 vs 随机初始化消融 | ✅ | 最终增广下 +52.58 pct test acc 提升 |
 | (4) 注意力机制 | ✅ | SE-ResNet18 (v1 / v2 cosine)，结论：本场景不超 baseline |
 | swanlab 可视化 | ✅ | 11 个 run 上报到 `swanlog/`，`swanlab watch swanlog` 截图 |
 | 报告填充 | ✅ | `../reports/report.md` Task 1 段落已完整重写 |
@@ -50,11 +50,14 @@ task1/
 
 | Tag | 配置 | Best Val | Test Acc | Test Loss |
 | --- | --- | ---: | ---: | ---: |
-| scratch | 随机初始化，head 1e-3 / bb 1e-4 | 0.4196 | 0.3675 | 3.1271 |
-| baseline_pretrained_v1 | 预训练，head 1e-3 / bb 1e-4 | 0.9118 | 0.8839 | 0.5051 |
-| **baseline_best** | **预训练，head 3e-3 / bb 1e-4（grid 最优）** | **0.9186** | **0.8920** | **0.4265** |
-| se_pretrained_v1 | SE-ResNet18 + 预训练，head 1e-3 / bb 1e-4 | 0.8892 | 0.8569 | 0.5790 |
-| se_pretrained_v2_cosine | SE-ResNet18 + 预训练 + cosine，head 3e-3 / bb 1e-4 | 0.8990 | 0.8699 | 0.5154 |
+| scratch (initial) | 随机初始化，初版增广 | 0.4196 | 0.3675 | 3.1271 |
+| baseline_pretrained_v1 | 预训练，head 1e-3 / bb 1e-4，初版增广 | 0.9118 | 0.8839 | 0.5051 |
+| baseline_best (initial) | 预训练，head 3e-3 / bb 1e-4，初版增广 | 0.9186 | 0.8920 | 0.4265 |
+| se_pretrained_v1 | SE-ResNet18，head 1e-3 / bb 1e-4，初版增广 | 0.8892 | 0.8569 | 0.5790 |
+| se_pretrained_v2_cosine (initial) | SE-ResNet18 + cosine，head 3e-3 / bb 1e-4，初版增广 | 0.8990 | 0.8699 | 0.5154 |
+| **scratch_v2** | 随机初始化，最终增广 | 0.4314 | 0.3794 | 3.2474 |
+| **baseline_best_v2** | **预训练，head 3e-3 / bb 1e-4，最终增广（REPORT.md 使用）** | **0.9284** | **0.9052** | **0.3703** |
+| **se_v2_cosine_v2** | SE-ResNet18 + cosine，head 3e-3 / bb 1e-4，最终增广 | 0.9206 | 0.8866 | 0.4387 |
 
 ### 超参数网格（baseline，30 epoch，best val acc）
 
@@ -98,6 +101,6 @@ swanlab watch swanlog
 
 ## 关键结论
 
-1. **预训练是决定性的**：从零训练 test acc=0.3675，预训练后 test acc=0.8920，提升 +52.5 pct。Flowers102 train 仅 1020 张，没有预训练完全没法学。
+1. **预训练是决定性的**：从零训练 test acc=0.3794（最终增广），预训练后 test acc=0.9052，提升 +52.58 pct。Flowers102 train 仅 1020 张，没有预训练完全没法学。
 2. **lr 不对称**：头部新层 lr 应明显大于骨干 lr（3e-3 vs 1e-4 ≈ 30×）。骨干 lr 太小（3e-5）整行底排，太大与头部同量级又会冲刷预训练特征。
 3. **SE-block 在本场景没赢**：在 ResNet-18 + Flowers102 + 30 epoch 上 SE 比 baseline 低约 2 pct test acc，即使用最优超参 + cosine 仍未追上。可能因为 BasicBlock 通道少（≤512）、SE 模块本身无预训练初始化，前期反而扰动了 ImageNet 特征。这是一个**有意义的负结论**，写进了报告。

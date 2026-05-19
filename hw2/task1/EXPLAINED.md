@@ -1,6 +1,8 @@
 # Task 1 详细讲解：为什么这么做、每个数字代表什么
 
 > 本文档配套 [`REPORT.md`](REPORT.md)，**报告负责"做了什么、得到什么"，本文负责"为什么这么做、结果该怎么解读"**。读完后你应该能：在面试或答辩时把所有数字、所有设计选择讲清楚，并解释 SE-block 为什么没赢。
+>
+> **关于数字版本**：本文中表格、网格与 SE 对比所用的具体数字来自**初版增广**（统一 224×224 Resize + HFlip + RandomRotation）下的实验，便于讨论超参选择的相对趋势；最终上报数字（baseline test 0.9052、scratch 0.3794、SE test 0.8866）使用**最终增广**（RandomResizedCrop + CenterCrop），见 `REPORT.md`。两个版本的相对结论一致：预训练 +52pct、SE 略低于 baseline。
 
 ---
 

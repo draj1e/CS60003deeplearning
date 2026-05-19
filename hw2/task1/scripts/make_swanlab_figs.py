@@ -109,7 +109,46 @@ def fig_se_vs_baseline() -> None:
     print(f"saved {out}")
 
 
+def fig_main_compare_v2() -> None:
+    runs = {
+        "scratch (no pretrain)":       load("scratch_v2"),
+        "baseline best (h=3e-3, bb=1e-4)": load("baseline_best_v2"),
+        "SE-ResNet18 v2 (cosine)":     load("se_v2_cosine_v2"),
+    }
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.2))
+    panel(axes[0], runs, "train_loss", "train loss", "loss")
+    panel(axes[1], runs, "val_loss", "val loss", "loss")
+    panel(axes[2], runs, "val_acc", "val accuracy", "acc")
+    axes[2].set_ylim(0, 1)
+    fig.suptitle("Task 1 main comparison (final, with corrected augmentation)", fontsize=12)
+    fig.tight_layout()
+    out = OUT / "fig_main_compare_v2.png"
+    fig.savefig(out)
+    plt.close(fig)
+    print(f"saved {out}")
+
+
+def fig_se_vs_baseline_v2() -> None:
+    runs = {
+        "baseline best":          load("baseline_best_v2"),
+        "SE-ResNet18 v2 (cosine)": load("se_v2_cosine_v2"),
+    }
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.2))
+    panel(axes[0], runs, "train_loss", "train loss", "loss")
+    panel(axes[1], runs, "val_loss", "val loss", "loss")
+    panel(axes[2], runs, "val_acc", "val accuracy", "acc")
+    axes[2].set_ylim(0.55, 0.95)
+    fig.suptitle("Task 1 attention ablation (final, with corrected augmentation)", fontsize=12)
+    fig.tight_layout()
+    out = OUT / "fig_se_vs_baseline_v2.png"
+    fig.savefig(out)
+    plt.close(fig)
+    print(f"saved {out}")
+
+
 if __name__ == "__main__":
     fig_main_compare()
     fig_grid_curves()
     fig_se_vs_baseline()
+    fig_main_compare_v2()
+    fig_se_vs_baseline_v2()

@@ -1,248 +1,216 @@
-# Task 1 实验报告：微调 ImageNet 预训练 CNN 实现 102 类花卉识别
+# 微调在ImageNet 上预训练的卷积神经网络实现花朵识别
 
-> **一句话总结**：在 102 Category Flower Dataset 上对比"ImageNet 预训练微调 / 从零随机初始化 / 加入 SE 注意力"三类配置，并通过 9 组学习率网格优化 baseline；最终 baseline 测试集 top-1 准确率 **89.20%**，相对随机初始化提升 **+52.5 个百分点**。
+## 组员与分工
+- 朱家杰（25210980147）：负责 Task 1（模型微调与训练）
+- （其他成员）：（对应分工）
 
-## 0. 提交要求 checklist
 
-- [x] 模型结构 / 数据集 / 实验结果基本介绍 → §2 §3 §5
-- [x] 详细实验设置（数据划分 / 网络结构 / batch size / lr / 优化器 / iteration / epoch / loss / 评价指标）→ §4
-- [x] wandb / swanlab 可视化截图（训练 / 验证 loss 曲线 + 验证 Accuracy 曲线）→ §6
-- [x] 任务 (1) Baseline 微调 → §5.1
-- [x] 任务 (2) 超参数分析 → §5.2
-- [x] 任务 (3) 预训练消融 → §5.3
-- [x] 任务 (4) 注意力机制 → §5.4
-- [x] **GitHub repo 链接**：<https://github.com/draj1e/CS60003deeplearning> （HW2 内容位于 [`hw2/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2) 子目录）
-- [x] **模型权重网盘地址**：<https://pan.baidu.com/s/1_SVen8Jpwpx2-HYKtRuO8A?pwd=6666> （提取码：`6666`）
-- [ ] **小组成员姓名 / 学号 / 分工**：⚠️ 待填写（见 §1）
+## 摘要
 
----
+本工作在 Oxford 102 Category Flower Dataset 上完成花卉细粒度分类任务。以 ResNet-18 为基础架构，对比"ImageNet 预训练 + 微调"与"完全随机初始化"两种训练范式，并通过 3×3 学习率网格搜索对预训练模型进行超参数优化，再在最优超参基础上引入 SE-block 通道注意力机制进行架构对比。最终预训练 baseline 的测试集 top-1 准确率达到 **90.52%**，相对随机初始化的 37.94% 提升 **+52.58 个百分点**；SE-ResNet18 在同等条件下取得 88.66% 测试准确率，略低于 baseline，本文对该现象给出分析。全部实验通过 swanlab 进行训练过程可视化记录。
 
-## 1. 小组信息
+## 1. 数据集
 
-| 姓名 | 学号 | 分工 |
-| --- | --- | --- |
-| _待填写_ | _待填写_ | 全部实验设计、代码、训练、报告 |
-| _待填写_ | _待填写_ | _待填写_ |
+**Oxford 102 Category Flower Dataset** 是面向细粒度图像分类的公开数据集，包含英国常见的 102 类花卉，每类 40–258 张图片，图像在角度、光照、遮挡、类间相似度（同属不同种）等方面具有较强挑战性。
 
----
+数据集划分采用 `torchvision.datasets.Flowers102` 内置的官方设定：
 
-## 2. 数据集介绍
-
-**Oxford 102 Category Flower Dataset**：英国 102 类常见花卉的细粒度分类数据集，每类 40-258 张图片，存在角度、光照、遮挡、类间相似度高（同属不同种）等挑战。
-
-| 划分 | 图像数 | 用途 |
+| 子集 | 图像数 | 用途 |
 | --- | ---: | --- |
-| train | 1020 | 训练（每类 10 张，**极小**） |
-| val | 1020 | 验证 / 模型选择（每类 10 张） |
-| test | 6149 | 最终测试 |
-| **合计** | **8189** | — |
+| 训练集 (train) | 1,020 | 模型训练 |
+| 验证集 (val)   | 1,020 | 模型选择与超参数调优 |
+| 测试集 (test)  | 6,149 | 最终性能评估 |
+| 合计 | 8,189 | — |
 
-- 来源：`torchvision.datasets.Flowers102`（首次自动下载至 `data/flowers102/`）。
-- 类别数：102。
-- 训练增广：`RandomResizedCrop(224, scale=(0.6, 1.0))` + `RandomHorizontalFlip` + ImageNet 均值/方差归一化。
-- 验证/测试增广：`Resize(256)` + `CenterCrop(224)` + 同样归一化。
+值得指出的是，训练集每类仅 10 张样本，规模远小于测试集，这是该数据集刻意设置的难度，也使其成为评估迁移学习效果的良好基准。
 
-**关键挑战**：训练集每类仅 10 张，从零训练严重欠数据 → 这正是题目要求做"预训练消融"的原因。
+数据预处理：训练阶段对图像采用 `RandomResizedCrop(224, scale=(0.6,1.0))`、`RandomHorizontalFlip` 增广，并以 ImageNet 均值方差归一化；验证与测试阶段采用 `Resize(256)` 后 `CenterCrop(224)` 与同样的归一化。
 
----
+## 2. 模型结构
 
-## 3. 模型结构
+### 2.1 Baseline：ResNet-18 + ImageNet 预训练
 
-### 3.1 Baseline（任务 1）
-- **骨干**：`torchvision.models.resnet18`，加载 `IMAGENET1K_V1` 权重。
-- **修改**：仅替换 `fc` 为 `nn.Linear(512, 102)`，其余层保留。
-- **参数量**：约 11.2M（其中 fc 新层 ~52K 从零训练）。
+使用 `torchvision.models.resnet18` 并加载 `IMAGENET1K_V1` 权重作为初始化，仅将最后一层全连接 `fc` 替换为 `nn.Linear(512, 102)`，其余结构保持不变。骨干部分约 11.17M 参数，新接的分类头约 0.05M 参数。
 
-### 3.2 Scratch 消融（任务 3）
-- 同 ResNet-18 结构，但 `weights=None`，**所有参数（包括卷积层）随机初始化**（PyTorch Kaiming 默认初始化）。
+### 2.2 Scratch 消融
 
-### 3.3 SE-ResNet18（任务 4）
-- 手动构造 `SEBasicBlock`：在每个 BasicBlock 的第二个 conv-bn 之后插入 SE 模块，再做残差相加。
-- SE 模块：`GAP → Linear(c→c/r) → ReLU → Linear(c/r→c) → Sigmoid`，reduction r=16。
-- 用 4 个 stage [2,2,2,2] 个 SEBasicBlock 重建 ResNet-18；ImageNet 预训练权重以 `strict=False` 拷入兼容层（SE 模块的 fc 仍从随机初始化开始）。
-- 代码位置：`src/hw2/classification/models.py`（也通过软链接 `task1/code/models.py`）。
+采用与 Baseline 完全相同的 ResNet-18 结构，但不加载任何预训练权重，所有参数由 PyTorch 默认 Kaiming 初始化。
 
-### 3.4 差分学习率（参数分组）
-两组：
-- backbone：所有预训练参数（约 11.17M），lr = lr_backbone（较小）。
-- head：新替换的 `fc`（102 类），lr = lr_head（较大）。
+### 2.3 SE-ResNet18
 
-由 `parameter_groups()` 函数实现，传给 AdamW。
+在 ResNet-18 的每个 BasicBlock 的第二个卷积-批归一化之后插入 Squeeze-and-Excitation 模块。SE 模块由全局平均池化、两层全连接（reduction r=16）、ReLU 与 Sigmoid 构成，最终得到的通道权重与残差相加前的特征图相乘。
 
----
+模型构造方式为：以 `SEBasicBlock` 自行组装 4 个 stage（块数为 [2,2,2,2]）形成 SE-ResNet18，再将 ImageNet 预训练 ResNet-18 权重以 `strict=False` 拷入与之兼容的层；SE 模块的两层全连接保持随机初始化。
 
-## 4. 实验设置
+### 2.4 差分学习率
 
-| 项 | 值 |
+模型参数被划分为两个 parameter group：
+- **backbone**：所有预训练或卷积部分的参数，学习率较小；
+- **head**：新接的 102 类分类头（或 SE 模块），学习率较大。
+
+两个 group 由统一的 AdamW 优化器联合更新。
+
+## 3. 实验设置
+
+| 项目 | 设置 |
 | --- | --- |
-| 框架 | PyTorch 2.11 (cu128) |
-| 优化器 | AdamW，weight_decay = 1e-4 |
+| 深度学习框架 | PyTorch 2.11.0 (CUDA 12.8) |
+| 优化器 | AdamW，weight_decay = 1×10⁻⁴ |
 | 损失函数 | CrossEntropyLoss |
-| Image size | 224 × 224 |
+| 输入分辨率 | 224 × 224 |
 | Batch size | 32 |
-| Epoch | 30 |
-| Iteration / epoch | 1020 / 32 = **32 iter/epoch**（train） |
-| 总 iteration | 32 × 30 = **960 iter** |
-| 学习率（baseline 最优） | head = 3e-3，backbone = 1e-4 |
-| 学习率（SE v2） | head = 3e-3，backbone = 1e-4，CosineAnnealingLR (T_max=30) |
-| Mixed precision | AMP (`torch.cuda.amp`) |
-| 评价指标 | top-1 Accuracy（val + test） |
-| 实验跟踪 | swanlab 本地 dashboard（`swanlog/`） |
+| Epoch 数 | 30 |
+| 每 epoch iteration 数 | ⌈1020 / 32⌉ = 32 |
+| 总训练 iteration | 32 × 30 = 960 |
+| Baseline 学习率（最优，§4.2 网格搜索得到） | head = 3×10⁻³，backbone = 1×10⁻⁴，恒定 |
+| SE-ResNet18 学习率 | head = 3×10⁻³，backbone = 1×10⁻⁴，CosineAnnealingLR (T_max=30) |
+| Scratch 学习率 | head = 1×10⁻³，backbone = 1×10⁻⁴，恒定 |
+| 混合精度 | AMP (`torch.cuda.amp`) |
+| 评价指标 | top-1 Accuracy（验证集与测试集） |
+| 实验跟踪 | swanlab（本地 dashboard） |
 | 随机种子 | 42 |
-| 硬件 | NVIDIA RTX 5090 × 1，~132 s / 30 epoch |
+| 训练硬件 | NVIDIA RTX 5090 × 1 |
+| 单次训练耗时 | 约 132 s / 30 epoch |
 
-数据划分严格使用 torchvision 官方 split，**不混用 val/test**：超参选择仅基于 val，test 仅在最终评估时用一次。
+模型选择策略：在每个 epoch 结束后于验证集上评估，保存验证准确率最高的权重为该 run 的 best checkpoint；测试集仅在最终评估时使用一次，未用于模型选择或超参数调优。
 
----
+## 4. 实验结果
 
-## 5. 实验结果
+### 4.1 Baseline 与微调结果
 
-### 5.1 任务 (1) — Baseline 微调
+在 ResNet-18 上加载 ImageNet 预训练权重并以差分学习率微调，结果如下：
 
-ResNet-18 + ImageNet 预训练 + head 从零训练 + 骨干 lr 较小：
-
-| 配置 | Best Val Acc | Test Acc | Test Loss |
+| 配置 | 验证集 Best Acc | 测试集 Acc | 测试集 Loss |
 | --- | ---: | ---: | ---: |
-| baseline v1（head 1e-3 / bb 1e-4） | 0.9118 | 0.8839 | 0.5051 |
-| **baseline best（head 3e-3 / bb 1e-4，§5.2 优化得到）** | **0.9186** | **0.8920** | **0.4265** |
+| Baseline v1（head 1e-3, bb 1e-4） | 0.9118 | 0.8839 | 0.5051 |
+| Baseline 最优（head 3e-3, bb 1e-4，最终增广） | **0.9284** | **0.9052** | **0.3703** |
 
-### 5.2 任务 (2) — 超参数分析
+注：§4.2 学习率网格搜索使用了初版数据增广（统一 `Resize((224,224))` + `RandomHorizontalFlip + RandomRotation(15)`），用于探索 lr_head 与 lr_backbone 的相对关系；选出的最优超参 `(head=3e-3, bb=1e-4)` 在最终训练配置（`RandomResizedCrop + CenterCrop`，即 §1 所述）下复跑得到上表中的 Baseline 最优结果。
 
-固定 ResNet-18 + 预训练 + 30 epoch，扫 `lr_head × lr_backbone` 9 组：
+### 4.2 超参数分析：学习率网格搜索
 
-| lr_head \ lr_backbone | **3e-5** | **1e-4** | **3e-4** |
+固定 ResNet-18 + ImageNet 预训练 + 30 epoch，对 head 与 backbone 的学习率进行 3×3 网格搜索（共 9 组），每组使用相同的随机种子与训练流程，结果（验证集 best accuracy）如下：
+
+| lr_head ＼ lr_backbone | 3×10⁻⁵ | 1×10⁻⁴ | 3×10⁻⁴ |
 | --- | ---: | ---: | ---: |
-| **5e-4** | 0.9088 | 0.9108 | 0.9176 |
-| **1e-3** | 0.9039 | 0.9147 | 0.9167 |
-| **3e-3** | 0.9010 | **0.9186** | 0.9167 |
+| 5×10⁻⁴ | 0.9088 | 0.9108 | 0.9176 |
+| 1×10⁻³ | 0.9039 | 0.9147 | 0.9167 |
+| 3×10⁻³ | 0.9010 | **0.9186** | 0.9167 |
 
-（单元格为 best val acc，30 epoch；完整数据见 `task1/results/grid_summary.csv`）
+观察：
 
-**观察**：
-- `lr_backbone = 3e-5` 一整列底排（≤ 0.91）：骨干 lr 太小，30 epoch 没充分微调。
-- `lr_head = 5e-4` 行随 lr_backbone 单调升（0.9088 → 0.9176）：新层 lr 偏小时，骨干 lr 越接近 head 越好。
-- `lr_head = 3e-3` 行存在拐点（0.9010 / **0.9186** / 0.9167）：head lr 越大越敏感于 bb lr 的"恰到好处"。
-- **最优**：`lr_head=3e-3, lr_backbone=1e-4`，比例约 30:1。
+1. 当 backbone 学习率过小（3×10⁻⁵）时整列结果最低，说明 30 epoch 内对骨干的微调不充分。
+2. 当 head 学习率较小（5×10⁻⁴）时，backbone 学习率越大效果越好；当 head 学习率较大（3×10⁻³）时，最佳 backbone 学习率反而回到 1×10⁻⁴。
+3. 整体最优为 `lr_head = 3×10⁻³, lr_backbone = 1×10⁻⁴`，二者比例约 30:1，与"新分类头从零训练需要较大学习率、预训练骨干仅需轻微调整"的迁移学习经验一致。
 
-热力图与曲线见 §6。
+### 4.3 预训练消融
 
-### 5.3 任务 (3) — 预训练消融
+对比相同 ResNet-18 结构在"加载 ImageNet 预训练权重"与"完全随机初始化"两种条件下的表现（均使用最终增广策略）：
 
-| 配置 | Best Val Acc | Test Acc | Δ test acc |
+| 配置 | 验证集 Best Acc | 测试集 Acc | 相对 Scratch 提升 |
 | --- | ---: | ---: | ---: |
-| Scratch（随机初始化） | 0.4196 | 0.3675 | — |
-| Baseline pretrained v1 | 0.9118 | 0.8839 | **+51.6** pct |
-| **Baseline pretrained best** | **0.9186** | **0.8920** | **+52.5** pct |
+| Scratch（随机初始化） | 0.4314 | 0.3794 | — |
+| Baseline pretrained 最优 | **0.9284** | **0.9052** | **+52.58 pct** |
 
-**结论**：在 Flowers102 这种小数据集（train=1020）上，ImageNet 预训练带来超过 50 个百分点的 test acc 提升。从零训练在 30 epoch 内无法学到有判别性的低/中层特征。
+在训练样本仅 1,020 张的小数据集上，ImageNet 预训练带来超过 52 个百分点的测试准确率提升。由于模型参数量（11.2M）远超训练样本数，从零开始训练在 30 epoch 内难以学到有判别力的低/中层特征。
 
-### 5.4 任务 (4) — 注意力机制
+### 4.4 注意力机制：SE-block
 
-在 baseline 基础上引入 SE-block（其余结构、预训练权重、训练流程完全相同）：
+在 Baseline 基础上引入 SE-block，与 Baseline 在同一最优超参 + 同一增广下对比：
 
-| 模型 | 超参 | Best Val | Test Acc |
+| 模型 | 学习率配置 | 验证集 Best Acc | 测试集 Acc |
 | --- | --- | ---: | ---: |
-| Baseline ResNet-18（grid 最优） | head 3e-3 / bb 1e-4 | **0.9186** | **0.8920** |
-| SE-ResNet18 v1 | head 1e-3 / bb 1e-4 | 0.8892 | 0.8569 |
-| SE-ResNet18 v2 | head 3e-3 / bb 1e-4 + cosine | 0.8990 | 0.8699 |
+| ResNet-18 Baseline (最优) | head 3e-3, bb 1e-4, 恒定 | **0.9284** | **0.9052** |
+| SE-ResNet18 (head 3e-3, bb 1e-4, cosine) | head 3e-3, bb 1e-4, cosine | 0.9206 | 0.8866 |
 
-**观察**：
-- 把超参对齐到 baseline best 并加 cosine schedule 后，SE 比 v1 提升 +1.0 / +1.3 pct，但仍比 baseline 低约 2.2 pct test acc。
-- SE 模块本身的参数（两层 fc）没有预训练权重，前期需要"冷启动"，等于在 ImageNet 表示上加了一层未训练的噪声门控。
-- ResNet-18 通道数较小（最大 512），通道注意力的信号-噪声比不如 ResNet-50/101。
-- 这是一个**有意义的负结论**：注意力机制并非"加上就好"，与骨干容量、数据规模、初始化策略强相关。详见 `EXPLAINED.md` §4。
+观察：
 
----
+- SE-ResNet18 在与 Baseline 完全一致的最优超参 + cosine 调度下，测试准确率为 0.8866，仍低于 Baseline 约 1.86 个百分点。
+- SE 模块本身的两层全连接没有 ImageNet 预训练权重，需要从随机初始化开始学习，前期 Sigmoid 输出约在 0.5 附近，相当于对预训练特征施加约 0.5 倍的衰减门控，破坏了骨干的初始表示，需要若干 epoch 重新适应。
+- ResNet-18 的最大通道数为 512，SE 模块在 c/16 = 32 ~ 4 的瓶颈维度下表达能力受限；同时训练集仅 1,020 张样本，额外引入的 SE 参数缺乏充分的数据支撑。
 
-## 6. swanlab 可视化截图
+该结果是经过严谨对照实验得到的，表明注意力机制并非"加入即提升"，其有效性与骨干容量、数据规模、初始化策略密切相关。
 
-> 训练全程上报到 swanlab 本地 dashboard（`swanlog/`，10 个 run）。下面的图由 swanlab 风格脚本 `task1/scripts/make_swanlab_figs.py` 从 history CSV 重绘（确保 PDF/markdown 离线可见），与 swanlab dashboard 等价。
->
-> 要查看交互式 swanlab dashboard：`swanlab watch swanlog`，浏览器开 `http://127.0.0.1:5092`。
+## 5. 训练过程可视化
 
-### 6.1 主对比图（train loss / val loss / val acc）
+实验全程通过 swanlab 进行本地记录。下图由 swanlab 后端数据（`swanlog/`）经统一脚本重绘以保证报告内嵌的清晰度，所展示的 train loss / val loss / val accuracy 曲线与 swanlab 交互式 dashboard 完全一致。读者可通过 `swanlab watch swanlog` 在本地复现交互式视图。
 
-![main compare](figures/swanlab/fig_main_compare.png)
+### 5.1 主对比：Scratch vs Baseline vs SE-ResNet18
 
-四条 run：`scratch`（蓝）远高于其他三条；`baseline best`（绿）val acc 最高且收敛最快；`SE v2`（红）稳定低于 baseline best 约 2 pct。
+![main compare](figures/swanlab/fig_main_compare_v2.png)
 
-### 6.2 超参网格 val accuracy 曲线（9 runs）
+三组训练（最终增广）在 30 epoch 内的 train loss、val loss 与 val accuracy。Scratch（蓝色）始终远低于其他两组，预训练 baseline（橙色）收敛最快并取得最优验证准确率，SE-ResNet18（绿色）稳定低于 baseline 约 2 个百分点。
+
+### 5.2 学习率网格的验证准确率曲线
 
 ![grid curves](figures/swanlab/fig_grid_curves.png)
 
-按 `lr_head` 分三面板。每张图里蓝线（`bb=3e-5`）始终最低，绿线（`bb=3e-4`）在小 head lr 下最优，橙线（`bb=1e-4`）在 head lr 较大时最优。
+9 组超参数组合的验证准确率曲线（使用初版增广用于探索超参趋势），按 lr_head 分三个面板，三种 lr_backbone 用不同颜色区分。所有 9 条曲线在 epoch 15 之后基本平稳，表明 30 epoch 的训练步数对该配置已足够；`lr_backbone = 3×10⁻⁵` 的蓝色曲线在三个面板中始终偏低。
 
-### 6.3 超参网格热力图（val acc + test acc）
+### 5.3 学习率网格热力图
 
 ![grid heatmap](figures/grid_heatmap.png)
 
-### 6.4 注意力消融
+左：验证集 best accuracy；右：测试集 accuracy（均为初版增广下的网格结果）。验证与测试两个指标的最优点一致，证明 §4.2 选定的最优超参对测试集泛化也有效，最优超参随后在最终增广下进一步带来 +1.32 pct 提升。
 
-![SE vs baseline](figures/swanlab/fig_se_vs_baseline.png)
+### 5.4 注意力机制对比
 
-SE v2 的 train loss 收敛与 baseline 几乎一致（甚至略低），但 val loss 与 val acc 都不如 baseline → 轻微过拟合 / 优化方向偏离。
+![SE vs baseline](figures/swanlab/fig_se_vs_baseline_v2.png)
 
-### 6.5 单 run 详细曲线（baseline best）
+Baseline 与 SE-ResNet18（均使用最终增广 + 最优超参）的 train loss / val loss / val accuracy 对比。SE-ResNet18 在前 5 个 epoch val loss 显著偏高，对应 SE 模块从随机权重初始化对预训练特征产生的扰动；后续 epoch 两者趋同但 SE 始终略低。
 
-![baseline best curves](figures/baseline_best_curves.png)
+### 5.5 Baseline 最优 run 的完整曲线
 
----
+![baseline best curves](figures/baseline_best_v2_curves.png)
 
-## 7. 结论
+Baseline 最优超参（head 3×10⁻³, backbone 1×10⁻⁴，最终增广）30 epoch 的 train/val loss 与 train/val accuracy 完整曲线。
 
-1. **预训练是决定性的**：在 train=1020 的小数据集上，ImageNet 预训练带来 +52.5 pct 的 test acc 提升。从零训练只能学到约 37% acc 的"基本结构"。
-2. **差分学习率有显著作用**：head 应使用比 backbone 大一个数量级以上的 lr（最优 30:1）。骨干 lr 太小（3e-5）时 30 epoch 没微调充分；太大时会冲刷预训练特征。
-3. **9 组网格压缩到 1 组最优**：val 提升 +0.68 pct，test 提升 +0.81 pct，达到 89.20%。
-4. **SE-block 在本场景没赢**：尽管在 ResNet-50 + 大数据集上 SE 通常有 +0.5～1.5 pct 提升，在 ResNet-18 + Flowers102 上未能超过 baseline。负结论同样有价值，提醒在选择架构改造时需结合数据规模和骨干容量考量。
+## 6. 结论
 
----
+1. **预训练对小数据集是决定性的**。在仅有 1,020 张训练样本的 Flowers102 数据集上，ImageNet 预训练相对于随机初始化带来 **+52.58 个百分点** 的测试准确率提升，从 37.94% 提升到 90.52%。
+2. **差分学习率与其比例关系**。在 AdamW 优化器下，新分类头与预训练骨干之间约 30:1 的学习率比例（3×10⁻³ vs 1×10⁻⁴）给出最佳结果；骨干学习率过小（3×10⁻⁵）会导致 30 epoch 内微调不充分，过大则会冲刷预训练特征。
+3. **SE-block 在本设置下未带来增益**。SE-ResNet18 在最优超参 + cosine 调度下测试准确率为 88.66%，比 baseline 低 1.86 个百分点。分析表明该结果源于 SE 模块缺少预训练初始化、骨干通道数较小、训练数据量有限三方面共同影响，说明注意力机制需结合具体骨干与数据规模评估。
 
-## 8. 复现说明
+## 7. 复现说明
+
+工程代码与本报告托管于本文末列出的 GitHub 仓库。完整复现流程如下：
 
 ```bash
-# 环境
+# 环境与依赖
 conda activate zl2
-cd /mnt/data/zjj/zl/hw2
+cd hw2
 export PYTHONPATH=$PWD/src
 
-# (1) 9 组超参网格 (~20 min on RTX 5090)
-bash task1/scripts/run_grid.sh 1            # 参数: GPU index
+# 9 组学习率网格搜索（约 20 分钟 / RTX 5090）
+bash task1/scripts/run_grid.sh 1
 
-# (2) 用 grid 最优超参 + cosine 训练 SE-ResNet18
+# SE-ResNet18 重训（最优超参 + cosine）
 bash task1/scripts/run_se_retrain.sh 1
 
-# (3) 汇总表 + 热力图 + swanlab 风格对比图
+# 汇总与绘图
 python task1/scripts/summarize_grid.py
 python task1/scripts/build_task1_summary.py
 python task1/scripts/make_swanlab_figs.py
 
-# (4) 任意单 run（如 baseline best 复现）
+# 单组训练示例：Baseline 最优
 python -m hw2.classification.train \
-  --config task1/configs/classification.yaml \
-  --variant baseline_pretrained \
-  --epochs 30 --lr-head 3e-3 --lr-backbone 1e-4 \
-  --tracker swanlab --run-name baseline_best
+    --config task1/configs/classification.yaml \
+    --variant baseline_pretrained \
+    --epochs 30 --lr-head 3e-3 --lr-backbone 1e-4 \
+    --tracker swanlab --run-name baseline_best
 
-# (5) 查看 swanlab 交互式 dashboard
-swanlab watch swanlog       # 浏览器开 http://127.0.0.1:5092
+# 启动 swanlab dashboard
+swanlab watch swanlog       # 浏览器访问 http://127.0.0.1:5092
 ```
 
-完整环境配置、依赖、目录结构、数据集获取，详见仓库根 `README.md` 与 `task1/README.md`。
+环境配置、依赖列表、数据集下载等详细说明位于仓库根目录的 `README.md` 与 `hw2/task1/README.md`。
 
----
+## 8. 代码与模型
 
-## 9. 代码与权重
-
-- **GitHub repo**：<https://github.com/draj1e/CS60003deeplearning>
-  - HW2 内容位于 [`hw2/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2) 子目录
-  - Task 1 完整材料位于 [`hw2/task1/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2/task1)
-- **模型权重网盘**：<https://pan.baidu.com/s/1_SVen8Jpwpx2-HYKtRuO8A?pwd=6666>
+- **GitHub 仓库**：<https://github.com/draj1e/CS60003deeplearning>
+  - HW2 工程目录：[`hw2/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2)
+  - Task 1 完整材料：[`hw2/task1/`](https://github.com/draj1e/CS60003deeplearning/tree/master/hw2/task1)
+- **模型权重下载（百度网盘）**：<https://pan.baidu.com/s/1_SVen8Jpwpx2-HYKtRuO8A?pwd=6666>
   - 提取码：**`6666`**
-  - 文件：`hw2_task1_weights_swanlog.tar.gz`（200 MB，含 5 个 `.pt` + swanlab 原始日志 + MANIFEST.txt）
-  - `best_baseline_best.pt`（grid 最优 baseline，~44 MB，test acc 0.8920）
-  - `best_baseline_pretrained.pt`（baseline v1）
-  - `best_scratch.pt`（消融对照）
-  - `best_se_pretrained.pt`（SE v1）
-  - `best_se_pretrained_v2_cosine.pt`（SE-ResNet18 最终版本）
-
-技术原理与设计选择的详细讲解见 [`EXPLAINED.md`](EXPLAINED.md)。
+  - 文件：`hw2_task1_weights_swanlog.tar.gz`（约 200 MB）
+  - 内含 5 个 PyTorch checkpoint（Baseline v1 / Baseline 最优 / Scratch / SE-ResNet18 v1 / SE-ResNet18 v2）与 swanlab 原始日志（10 个 run）。

@@ -1,0 +1,18 @@
+{
+  "run_name": "scratch_v2",
+  "variant": "scratch",
+  "arch": "resnet18",
+  "pretrained": false,
+  "attention": "none",
+  "epochs": 30,
+  "batch_size": 32,
+  "lr_backbone": 0.0001,
+  "lr_head": 0.001,
+  "weight_decay": 0.0001,
+  "scheduler": "none",
+  "best_val_acc": 0.4313725499545827,
+  "test_loss": 3.247366004211958,
+  "test_acc": 0.379411286397724,
+  "duration_sec": 136.30272150039673,
+  "checkpoint": "outputs/classification_v2/best_scratch_v2.pt"
+}

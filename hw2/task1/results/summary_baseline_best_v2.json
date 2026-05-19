@@ -1,0 +1,18 @@
+{
+  "run_name": "baseline_best_v2",
+  "variant": "baseline_pretrained",
+  "arch": "resnet18",
+  "pretrained": true,
+  "attention": "none",
+  "epochs": 30,
+  "batch_size": 32,
+  "lr_backbone": 0.0001,
+  "lr_head": 0.003,
+  "weight_decay": 0.0001,
+  "scheduler": "none",
+  "best_val_acc": 0.928431373016507,
+  "test_loss": 0.3702837298387184,
+  "test_acc": 0.9051878354203936,
+  "duration_sec": 134.62439370155334,
+  "checkpoint": "outputs/classification_v2/best_baseline_best_v2.pt"
+}
