@@ -1,0 +1,32 @@
+# Python/runtime caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local model/download caches
+.cache/
+
+# Large raw data and training outputs
+data/
+outputs/
+submit/
+logs/
+
+# Third-party repositories and pretrained weights are documented in README.
+third_party/
+
+# Large generated assets: upload via cloud storage instead of GitHub.
+assets/
+
+# Keep final reports in git, but ignore temporary PDF previews.
+outputs/report_preview/
+
+# Local submission info may contain private student IDs or unpublished links.
+docs/submission_info.json
+
+# OS/editor noise
+.DS_Store
+*.swp
+*.swo

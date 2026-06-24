@@ -1,0 +1,12 @@
+{
+  "members": [
+    {
+      "name": "待填写",
+      "student_id": "待填写",
+      "role": "待填写"
+    }
+  ],
+  "github_repo": "待上传后填写",
+  "model_weights_url": "待上传后填写",
+  "model_weights_note": "如有提取码，请写在这里"
+}
