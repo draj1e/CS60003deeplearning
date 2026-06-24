@@ -1,21 +1,18 @@
 # HW3 题目一实验报告：基于 3DGS 与 AIGC 的多源资产生成与真实场景融合
 
-## 首页信息
+杨瑞欣 2521098012  
+朱家杰 25210980147
 
 | 项目 | 内容 |
 | --- | --- |
-| 题目 | 基于 3DGS 与 AIGC 的多源资产生成与真实场景融合 |
-| 组员 / 学号 / 分工 | 待填写；题目一：3DGS 与 AIGC 多源资产生成、融合实验与报告整理 |
 | GitHub Public Repository | <https://github.com/draj1e/CS60003deeplearning> |
 | 模型权重与关键产物网盘链接 | <https://pan.baidu.com/s/1ECIzurYlQhJvwKDFMDASEA?pwd=6666>，提取码：6666 |
-
-**一句话总结：本工程真实运行了 COLMAP+3DGS、threestudio+SDS、Zero123 XL 和开源场景 3DGS，并把三类资产插入同一真实背景中生成多视角漫游视频。**
 
 ## 1. 任务背景
 
 题目一要求完成一个多源 3D 资产生成与真实场景融合系统。输入来源包括手机视频/多视角图像、文本 Prompt、手机单图以及公开真实 3D 场景数据；输出需要包含三类物体资产、背景 3DGS、融合结果和多视角漫游视频。
 
-本项目只完成题目一，因此报告和提交材料均围绕题目一展开。不能把早期程序化代理资产、空 mesh 导出或调试视频作为最终结果；最终结果均来自真实训练或真实导出的产物。
+本实验围绕题目一展开，目标是比较视频多视角重建、文本生成 3D 和单图生成 3D 三种资产获取方式，并将它们与真实背景 3DGS 融合到同一场景。最终结果均来自真实训练或真实导出的产物。
 
 ## 2. 数据集描述
 
@@ -130,29 +127,20 @@
 | 文本 + SDS | 不依赖真实拍摄，可生成开放类别 | 结果受 diffusion 模型和训练步数影响大 | B 可形成主体，但细节有限 |
 | 单图 + Zero123 | 输入成本低，能利用真实外观 | 背面和遮挡区域依赖先验 | C 正面一致性较好，完整性弱于多视角 |
 
-## 10. 复现与提交说明
+## 10. 外部链接
 
-环境和命令见 `README.md`。更详细的上传分工见：
+| 项目 | 链接 |
+| --- | --- |
+| GitHub Public Repository | <https://github.com/draj1e/CS60003deeplearning> |
+| 模型权重与关键产物网盘 | <https://pan.baidu.com/s/1ECIzurYlQhJvwKDFMDASEA?pwd=6666> |
+| 提取码 | 6666 |
 
-- `docs/upload_split_guide.md`
-- `docs/github_release_guide.md`
-- `docs/submission_package_manifest.md`
+## 参考文献
 
-提交前需要复制并填写：
-
-```bash
-cp docs/submission_info.template.json docs/submission_info.json
-```
-
-填写姓名、学号、分工、GitHub 链接、网盘链接后重新生成 PDF：
-
-```bash
-conda run -n zl2 python scripts/make_report.py
-```
-
-最终网盘压缩包为：
-
-```text
-submit/hw3_topic1_netdisk_core.zip
-submit/hw3_topic1_netdisk_core.zip.sha256
-```
+1. Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, George Drettakis. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM TOG, 2023. <https://arxiv.org/abs/2308.04079>
+2. Johannes L. Schönberger, Jan-Michael Frahm. Structure-from-Motion Revisited. CVPR, 2016. <https://demuc.de/papers/schoenberger2016sfm.pdf>
+3. Ben Poole, Ajay Jain, Jonathan T. Barron, Ben Mildenhall. DreamFusion: Text-to-3D using 2D Diffusion. ICLR, 2023. <https://arxiv.org/abs/2209.14988>
+4. Ruoshi Liu et al. Zero-1-to-3: Zero-shot One Image to 3D Object. ICCV, 2023. <https://arxiv.org/abs/2303.11328>
+5. threestudio contributors. threestudio: A Modular Framework for Diffusion-Guided 3D Generation. ICCV AI3DCC Workshop, 2023. <https://github.com/threestudio-project/threestudio>
+6. Arno Knapitsch, Jaesik Park, Qian-Yi Zhou, Vladlen Koltun. Tanks and Temples: Benchmarking Large-Scale Scene Reconstruction. ACM TOG, 2017. <https://www.tanksandtemples.org/>
+7. Weights & Biases. Experiment Tracking Documentation. <https://docs.wandb.ai/models/track>

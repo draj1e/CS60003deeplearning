@@ -71,10 +71,13 @@ def load_submission_info() -> dict:
     if path.exists():
         return json.loads(path.read_text())
     return {
-        "members": [{"name": "待填写", "student_id": "待填写", "role": "待填写"}],
-        "github_repo": "待上传后填写",
-        "model_weights_url": "待上传后填写",
-        "model_weights_note": "如有提取码，请写在这里",
+        "members": [
+            {"name": "杨瑞欣", "student_id": "2521098012", "role": "题目一：3DGS 与 AIGC 多源资产生成、融合实验与报告整理"},
+            {"name": "朱家杰", "student_id": "25210980147", "role": "题目一：实验复现、资产融合与报告整理"},
+        ],
+        "github_repo": "https://github.com/draj1e/CS60003deeplearning",
+        "model_weights_url": "https://pan.baidu.com/s/1ECIzurYlQhJvwKDFMDASEA?pwd=6666",
+        "model_weights_note": "百度网盘提取码：6666",
     }
 
 
@@ -174,13 +177,8 @@ def update_progress(report_pdf: Path) -> None:
 
 def build_pdf(charts: dict[str, Path]) -> Path:
     info = load_submission_info()
-    members = info.get("members") or []
-    member_text = "；".join(
-        f"{m.get('name', '待填写')} / {m.get('student_id', '待填写')} / {m.get('role', '待填写')}"
-        for m in members
-    ) or "待填写 / 待填写 / 待填写"
-    github_repo = info.get("github_repo", "待上传后填写")
-    model_weights_url = info.get("model_weights_url", "待上传后填写")
+    github_repo = info.get("github_repo", "https://github.com/draj1e/CS60003deeplearning")
+    model_weights_url = info.get("model_weights_url", "https://pan.baidu.com/s/1ECIzurYlQhJvwKDFMDASEA?pwd=6666")
     model_weights_note = info.get("model_weights_note", "")
 
     font = register_font()
@@ -195,11 +193,12 @@ def build_pdf(charts: dict[str, Path]) -> Path:
     story = []
 
     story.append(Paragraph("HW3 题目一：基于 3DGS 与 AIGC 的多源资产生成与真实场景融合", h1))
-    story.append(Paragraph(f"组员 / 学号 / 分工：{member_text}", normal))
+    story.append(Paragraph("杨瑞欣 2521098012", normal))
+    story.append(Paragraph("朱家杰 25210980147", normal))
+    story.append(Spacer(1, 0.15 * cm))
     story.append(Paragraph(f"GitHub 仓库链接：{github_repo}", normal))
     story.append(Paragraph(f"模型/资产权重网盘：{model_weights_url}；{model_weights_note}", normal))
     story.append(Spacer(1, 0.2 * cm))
-    story.append(Paragraph("<b>一句话总结：</b>本工程真实运行了 COLMAP+3DGS、threestudio+SDS、Zero123 和公开场景 3DGS，并将 A/B/C 三个资产插入同一 3DGS 背景生成漫游视频。", normal))
 
     quick = [
         ["模块", "输入/方法", "关键输出", "状态"],
@@ -211,13 +210,20 @@ def build_pdf(charts: dict[str, Path]) -> Path:
     ]
     story.append(table(quick, font, [2.4, 4.5, 5.2, 1.8]))
 
-    story.append(Paragraph("不能做的", h2))
-    story.append(Paragraph("不能把旧的程序化代理资产、旧融合视频或空 mesh 导出当作题面完成结果。报告中的 GitHub public repo、网盘链接、姓名学号分工也不能由程序自动生成，提交前必须人工填写。", normal))
+    story.append(Paragraph("1. 任务背景", h2))
+    story.append(Paragraph("题目要求从真实多视角、文本 Prompt、单张真实照片三种来源准备 3D 资产，并把它们插入开源真实场景 3DGS 背景中。本实验目标是比较三种资产生成方式的几何质量、纹理一致性和融合可用性，并验证不同来源资产在统一点/高斯式表达下的真实场景融合效果。", normal))
 
-    story.append(Paragraph("1. 数据与任务背景", h2))
-    story.append(Paragraph("题目要求从真实多视角、文本 Prompt、单张真实照片三种来源准备 3D 资产，并把它们插入开源真实场景 3DGS 背景中。输入素材为 `sources/video1.mp4` 和 `sources/pic1.jpg`，背景采用官方 T&T+DeepBlending 的 `train` 场景。", normal))
+    story.append(Paragraph("2. 数据集描述", h2))
+    dataset_rows = [
+        ["数据", "来源", "用途", "路径"],
+        ["物体 A 视频", "手机拍摄视频", "COLMAP 位姿估计与 3DGS 重建", "sources/video1.mp4"],
+        ["物体 C 单图", "手机拍摄图片", "Zero123 XL 单图到 3D", "sources/pic1.jpg"],
+        ["背景场景", "T&T+DeepBlending 公开数据", "背景 3DGS 训练", "data/tandt_db/tandt/train"],
+        ["作业要求", "OCR Markdown", "需求核对", "sources/HW3_深度学习与空间智能.pdf_by_PaddleOCR-VL-1.6.md"],
+    ]
+    story.append(table(dataset_rows, font, [2.4, 3.0, 4.5, 4.5], font_size=7.2))
 
-    story.append(Paragraph("2. 方法与实现", h2))
+    story.append(Paragraph("3. 方法原理与实现", h2))
     method_rows = [
         ["模块", "实现细节", "日志/证据"],
         ["A", "80 帧手机视频抽帧，COLMAP exhaustive matcher，最佳模型注册 54/80 张图；官方 3DGS 训练 2000 iter。", "logs/colmap_object_a_exhaustive/, logs/3dgs_object_a_train.log"],
@@ -228,19 +234,29 @@ def build_pdf(charts: dict[str, Path]) -> Path:
     ]
     story.append(table(method_rows, font, [1.2, 7.4, 5.2], font_size=7.2))
 
-    story.append(Paragraph("3. 超参数与指标", h2))
+    story.append(Paragraph("4. 实验设置、超参数与指标", h2))
     hyper = [
-        ["项目", "设置/指标"],
-        ["A COLMAP", "54/80 images registered, 2371 sparse points, reprojection error 0.754620 px"],
-        ["A 3DGS", "2000 iterations, 34,576 Gaussians, train L1 0.019615, PSNR 27.6767"],
-        ["B SDS", "1000 steps, 64x64 train, 128x128 eval, 50,000 sampled points"],
-        ["C Zero123", "300 steps, Zero123 XL, 64x64 train, 128x128 eval, 50,000 sampled points"],
-        ["Background 3DGS", "2000 iterations, 326,586 Gaussians, 301 rendered train views"],
-        ["Fusion video", "96 frames, 24 FPS, 4 seconds, H.264, output 960x544"],
+        ["模块", "Network Architecture / 方法", "Batch Size", "Learning Rate", "Optimizer", "Epochs / Steps", "Loss Function"],
+        ["物体 A", "官方 3DGS", "官方默认", "官方默认", "Adam", "2000 iters", "L1 + SSIM 组合"],
+        ["物体 B", "threestudio DreamFusion/SDS + tiny SD", "随机相机默认配置", "threestudio 默认", "Adam/Lightning 默认", "1000 steps", "SDS loss"],
+        ["物体 C", "threestudio Zero123 XL", "1", "threestudio 默认", "Adam/Lightning 默认", "300 steps", "Zero123 guidance loss"],
+        ["背景", "官方 3DGS", "官方默认", "官方默认", "Adam", "2000 iters", "L1 + SSIM 组合"],
+        ["融合", "点/高斯统一渲染", "N/A", "N/A", "N/A", "96 frames", "N/A"],
     ]
-    story.append(table(hyper, font, [4.0, 10.0]))
+    story.append(table(hyper, font, [1.4, 3.2, 2.0, 1.8, 2.2, 1.8, 2.4], font_size=6.3))
+    metrics = [
+        ["模块", "关键评价指标", "具体取值"],
+        ["物体 A COLMAP", "注册图像 / 稀疏点 / 重投影误差", "54/80 images, 2371 points, 0.754620 px"],
+        ["物体 A 3DGS", "高斯数量 / Train L1 / PSNR", "34,576, 0.019615, 27.6767"],
+        ["物体 B SDS", "训练 checkpoint / 导出点云", "1000 steps, 50,000 points"],
+        ["物体 C Zero123", "训练 checkpoint / 导出点云", "300 steps, 50,000 points"],
+        ["背景 3DGS", "高斯数量 / 渲染 train views", "326,586, 301 views"],
+        ["融合视频", "分辨率 / 帧数 / 帧率 / 时长", "960x544, 96 frames, 24 FPS, 4 seconds"],
+    ]
+    story.append(Spacer(1, 0.12 * cm))
+    story.append(table(metrics, font, [3.0, 5.2, 5.8], font_size=7.2))
 
-    story.append(Paragraph("4. 结果展示", h2))
+    story.append(Paragraph("5. 实验结果展示", h2))
     preview = RENDERS / "fusion_real_preview.jpg"
     if preview.exists():
         story.append(Image(str(preview), width=15 * cm, height=8.45 * cm))
@@ -256,7 +272,7 @@ def build_pdf(charts: dict[str, Path]) -> Path:
     story.append(Image(str(charts["quality"]), width=14.5 * cm, height=8.4 * cm))
     story.append(Image(str(charts["runtime"]), width=14.5 * cm, height=8.4 * cm))
 
-    story.append(Paragraph("5. 三种资产生成方式对比", h2))
+    story.append(Paragraph("6. 深度现象分析与三种资产生成方式对比", h2))
     comp = [
         ["方式", "几何准确度", "纹理细节", "计算耗时", "现象分析"],
         ["多视角重建", "最好，几何来自真实视角和 COLMAP 位姿", "受手机模糊、反光和 3DGS 步数影响", "中等", "真实性最高，但对拍摄质量和位姿估计敏感"],
@@ -265,11 +281,20 @@ def build_pdf(charts: dict[str, Path]) -> Path:
     ]
     story.append(table(comp, font, [2.2, 3.3, 3.0, 2.0, 3.5]))
 
-    story.append(Paragraph("6. 表达统一与合并渲染", h2))
+    story.append(Paragraph("7. 表达统一与合并渲染", h2))
     story.append(Paragraph("A 和背景保留官方 3DGS 输出的 `point_cloud.ply`，颜色从 SH 的 `f_dc_0/1/2` 恢复；B 和 C 的 threestudio/Zero123 mesh exporter 在本环境中可能导出空 mesh，因此采用真实 checkpoint 的隐式密度场采样，导出带 RGB 的 PLY。融合阶段把四个点集归一化到统一尺度，设置相对位置后用同一相机轨迹点渲染，避免用旧程序化资产冒充。", normal))
 
-    story.append(Paragraph("7. 结论", h2))
-    story.append(Paragraph("本项目已经完成题目一要求的真实技术链路和可提交核心产物。剩余工作是提交侧信息：填写个人/分工信息，上传 Public GitHub 仓库，并把关键权重和产物上传网盘。", normal))
+    story.append(Paragraph("8. 结论", h2))
+    story.append(Paragraph("本实验完成了题目一要求的多源资产生成与真实场景融合流程。多视角视频重建在几何可信度上最好，文本到 3D 具有开放类别生成能力但细节依赖扩散模型能力，单图到 3D 输入成本最低但背面补全依赖先验。统一点/高斯式表达后，三类资产可以与真实背景 3DGS 共同渲染，形成多视角漫游视频。", normal))
+
+    story.append(Paragraph("9. 外部链接", h2))
+    links = [
+        ["项目", "链接"],
+        ["GitHub Public Repository", github_repo],
+        ["模型权重与关键产物网盘", model_weights_url],
+        ["提取码", model_weights_note.replace("百度网盘提取码：", "") or "6666"],
+    ]
+    story.append(table(links, font, [4.0, 10.0], font_size=8.0))
 
     story.append(PageBreak())
     story.append(Paragraph("附录：关键产物路径", h2))

@@ -22,8 +22,8 @@
 | 背景 3DGS | 完成 | `outputs/3dgs_background_train/point_cloud/iteration_2000/point_cloud.ply`, `logs/3dgs_background_train2000.log` |
 | 三物体插入背景 | 完成 | `scripts/render_real_fusion.py`, `outputs/renders/fusion_real_preview.jpg` |
 | 多视角漫游视频 | 完成 | `outputs/renders/fusion_real_multisource_render.mp4`，96 帧、24 FPS、4 秒 |
-| 三种方式质量对比 | 完成 | `reports/hw3_topic1_report.pdf`, `reports/quality_comparison.png`, `reports/runtime.png` |
-| 统一表达/合并渲染说明 | 完成 | `reports/hw3_topic1_report.pdf`, `scripts/render_real_fusion.py` |
+| 三种方式质量对比 | 完成 | `reports/hw3_topic1_report.pdf`, `reports/hw3_topic1_report.tex`, `reports/quality_comparison.png`, `reports/runtime.png` |
+| 统一表达/合并渲染说明 | 完成 | `reports/hw3_topic1_report.pdf`, `reports/hw3_topic1_report.tex`, `scripts/render_real_fusion.py` |
 | WandB/SwanLab 图表 | 完成 | `outputs/wandb/wandb/offline-run-20260624_041113-qk316ps0/run-qk316ps0.wandb`, `reports/wandb_loss_curves.png`, `reports/wandb_validation_metrics.png` |
 | README 环境和命令 | 完成 | `README.md` |
 | 本地提交包 | 完成 | `submit/hw3_topic1_netdisk_core.zip`, `submit/hw3_topic1_netdisk_core.zip.sha256` |

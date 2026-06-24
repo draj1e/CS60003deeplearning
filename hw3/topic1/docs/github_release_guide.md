@@ -7,6 +7,7 @@
 - `requirements.txt`
 - `scripts/`
 - `docs/`
+- `reports/hw3_topic1_report.tex`
 - `reports/hw3_topic1_report.md`
 - `reports/hw3_topic1_report.pdf`
 - `reports/wandb_loss_curves.png`

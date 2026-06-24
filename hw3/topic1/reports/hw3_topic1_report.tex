@@ -1,0 +1,275 @@
+\documentclass[10pt,twocolumn]{ctexart}
+
+\usepackage[a4paper,top=1.9cm,bottom=2.2cm,left=1.55cm,right=1.55cm,columnsep=0.75cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{amsmath}
+\graphicspath{{./}{../outputs/renders/}}
+
+\setCJKmainfont{Noto Serif CJK SC}
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont{DejaVu Sans Mono}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\captionsetup{font=small,labelfont=bf}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
+\emergencystretch=2em
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{0.8em}{0.35em}
+\titlespacing*{\subsection}{0pt}{0.6em}{0.25em}
+
+\newcommand{\repo}{\url{https://github.com/draj1e/CS60003deeplearning}}
+\newcommand{\cloud}{\url{https://pan.baidu.com/s/1ECIzurYlQhJvwKDFMDASEA?pwd=6666}}
+
+\title{\vspace{-1.2em}\bfseries HW3 题目一：基于 3DGS 与 AIGC 的多源资产生成与真实场景融合}
+\author{
+  杨瑞欣\quad 2521098012
+  \and
+  朱家杰\quad 25210980147
+}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.8em}
+
+\begin{abstract}
+本实验围绕“基于 3DGS 与 AIGC 的多源资产生成与真实场景融合”完成题目一。系统从四类来源构建场景：手机视频物体 A 使用 COLMAP 位姿估计与 3D Gaussian Splatting 重建，文本物体 B 使用 threestudio 与 SDS 优化生成，手机单图物体 C 使用 Zero123 XL 生成，背景采用公开真实多视角数据训练 3DGS。最终将 A/背景的 3DGS PLY 与 B/C 的隐式体场采样点云统一到点/高斯式表达，渲染得到多视角漫游视频。实验报告给出数据、方法、超参数、WandB 图表、关键指标和现象分析。
+\end{abstract}
+
+\noindent\textbf{GitHub 仓库：}\repo
+
+\noindent\textbf{模型权重与关键产物网盘：}\cloud，提取码：6666
+
+\section{任务背景}
+题目要求从真实多视角、文本 Prompt、单张真实照片和公开真实场景四类来源准备 3D 资产，并将多个前景物体插入同一个真实 3DGS 背景中。3D Gaussian Splatting 使用可优化的各向异性高斯表示场景，在新视角合成中兼顾质量与渲染效率\cite{kerbl2023gaussian}；COLMAP 为真实视频或照片提供稀疏重建与相机位姿估计基础\cite{schoenberger2016sfm}。AIGC 资产部分则结合 DreamFusion/SDS 的文本到 3D 思路\cite{poole2022dreamfusion}和 Zero-1-to-3 的单图视角先验\cite{liu2023zero123}，验证不同输入条件下的 3D 资产可用性。
+
+本实验的目标不是只生成独立资产，而是让多源资产进入同一个真实场景并完成多视角漫游渲染。因此，报告重点关注三个问题：第一，不同来源资产的几何与纹理质量差异；第二，训练与导出过程中出现的失败模式；第三，不同表示之间如何统一并融合到背景 3DGS 中。
+
+\section{数据集描述}
+表 \ref{tab:data} 汇总了本实验使用的数据。物体 A 与物体 C 来自手机拍摄素材，背景使用 T\&T+DeepBlending 公开真实多视角场景。Tanks and Temples 数据集强调在真实室内外条件下进行大规模场景重建评测，适合作为真实背景数据来源\cite{knapitsch2017tanks}。
+
+\begin{table}[t]
+  \centering
+  \caption{实验数据来源与用途。}
+  \label{tab:data}
+  \small
+  \begin{tabularx}{\columnwidth}{@{}l l X@{}}
+    \toprule
+    数据 & 来源 & 用途 \\
+    \midrule
+    物体 A 视频 & 手机拍摄 & COLMAP 位姿估计与 3DGS 重建 \\
+    物体 C 单图 & 手机拍摄 & Zero123 XL 单图到 3D \\
+    背景场景 & T\&T+DeepBlending & 背景 3DGS 训练 \\
+    作业要求 & OCR Markdown & 需求核对与提交检查 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+手机视频首先抽帧，再进行特征匹配与稀疏重建；单图输入先裁剪并生成 RGBA 前景；背景数据保留公开数据中的 COLMAP 相机参数和多视角图像。所有实验路径在 README 中以相对路径记录，便于复现。
+
+\section{方法原理简述}
+\subsection{物体 A：COLMAP + 3DGS}
+物体 A 使用手机环绕视频抽帧得到多视角图像。COLMAP 进行特征提取、穷举匹配、几何验证和增量式 SfM，得到相机内外参与稀疏点云\cite{schoenberger2016sfm}。随后使用官方 3DGS 训练流程，从稀疏点初始化高斯位置，联合优化位置、尺度、旋转、不透明度和球谐颜色\cite{kerbl2023gaussian}。
+
+\subsection{物体 B：文本到 3D}
+物体 B 使用 threestudio 框架运行 DreamFusion/SDS 路线。threestudio 是扩散指导 3D 生成的模块化框架，支持文本、单图和少样本输入\cite{threestudio2023}。本实验的 Prompt 为“a small blue ceramic deer figurine with white antlers, glossy product asset”。原计划使用 SD2.1，但模型下载需要授权，因此改用公开可访问的 \texttt{segmind/tiny-sd} 进行真实 SDS 优化。由于 mesh exporter 在当前训练步数下导出空等值面，最终从训练后的隐式体场采样密度最高区域并导出带颜色点云。
+
+\subsection{物体 C：单图到 3D}
+物体 C 使用手机单图生成 RGBA 前景，再使用 Zero123 XL 进行单图到 3D 优化。Zero-1-to-3 通过视角条件扩散模型学习相对相机变化，使单张 RGB 图像能够生成指定视角图像，并可作为单图 3D 重建的先验\cite{liu2023zero123}。本实验训练 300 steps 后，从隐式体场采样为带颜色点云。
+
+\subsection{背景与融合}
+背景采用公开真实多视角场景训练 3DGS。融合阶段读取 A 与背景的 3DGS PLY，并从其中的 SH DC 分量恢复颜色；B/C 读取真实 checkpoint 导出的 RGB 点云。四类资产经坐标归一化、尺度调整和平移后，在同一相机轨迹下进行点/高斯式渲染。
+
+\section{实验设置与评价指标}
+表 \ref{tab:hparams} 给出主要超参数。WandB offline 用于记录训练过程曲线和验证/诊断指标，WandB 官方文档说明其可记录 metrics、hyperparameters 与训练图表，便于复现实验过程\cite{wandbdocs}。
+
+\begin{table*}[t]
+  \centering
+  \caption{实验设置与超参数。}
+  \label{tab:hparams}
+  \small
+  \begin{tabularx}{\textwidth}{@{}l X l l l l X@{}}
+    \toprule
+    模块 & Network Architecture / 方法 & Batch Size & Learning Rate & Optimizer & Epochs/Steps & Loss Function \\
+    \midrule
+    物体 A & 官方 3DGS & 官方默认 & 官方默认 & Adam & 2000 iters & L1 + SSIM 组合 \\
+    物体 B & threestudio DreamFusion/SDS + tiny SD & 随机相机默认配置 & threestudio 默认 & Adam/Lightning 默认 & 1000 steps & SDS loss \\
+    物体 C & threestudio Zero123 XL & 1 & threestudio 默认 & Adam/Lightning 默认 & 300 steps & Zero123 guidance loss \\
+    背景 & 官方 3DGS & 官方默认 & 官方默认 & Adam & 2000 iters & L1 + SSIM 组合 \\
+    融合 & 点/高斯统一渲染 & N/A & N/A & N/A & 96 frames & N/A \\
+    \bottomrule
+  \end{tabularx}
+\end{table*}
+
+\begin{table}[t]
+  \centering
+  \caption{关键评价指标。}
+  \label{tab:metrics}
+  \small
+  \begin{tabularx}{\columnwidth}{@{}l X@{}}
+    \toprule
+    模块 & 指标取值 \\
+    \midrule
+    A COLMAP & 注册 54/80 张图，2371 稀疏点，重投影误差 0.754620 px \\
+    A 3DGS & 34,576 高斯，Train L1 0.019615，PSNR 27.6767 \\
+    B SDS & 1000-step checkpoint，导出 50,000 点 \\
+    C Zero123 & 300-step checkpoint，导出 50,000 点 \\
+    背景 3DGS & 326,586 高斯，301 个 train views 渲染结果 \\
+    融合视频 & 960$\times$544，96 帧，24 FPS，4 秒，H.264 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{实验结果展示}
+图 \ref{fig:fusion} 展示最终融合预览。图 \ref{fig:wandb} 给出 WandB offline 导出的 Loss 曲线和验证/诊断指标曲线。最终视频见网盘压缩包中的 \texttt{fusion\_real\_multisource\_render.mp4}。
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{fusion_real_preview.jpg}
+  \caption{真实 A/B/C 资产与背景 3DGS 的融合预览。}
+  \label{fig:fusion}
+\end{figure}
+
+\begin{figure*}[t]
+  \centering
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{wandb_loss_curves.png}
+    \caption{训练过程 Loss 曲线。}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{wandb_validation_metrics.png}
+    \caption{验证/诊断指标曲线。}
+  \end{subfigure}
+  \caption{WandB offline 记录并导出的可视化图表。}
+  \label{fig:wandb}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{loss_curves.png}
+    \caption{本地日志复核曲线。}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{quality_comparison.png}
+    \caption{三种方式质量对比。}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{runtime.png}
+    \caption{本地耗时对比。}
+  \end{subfigure}
+  \caption{补充实验统计图。}
+  \label{fig:extra}
+\end{figure*}
+
+\section{深度现象分析}
+\textbf{多视角重建更可信但依赖拍摄质量。} 物体 A 的 COLMAP 注册 54/80 张图，说明手机环绕视频提供了足够的基线与纹理信息，但仍受反光、运动模糊和局部重复纹理影响。3DGS 最终达到 PSNR 27.6767，几何与外观一致性优于单图和文本生成资产。
+
+\textbf{文本到 3D 的开放性强，但几何细节最不稳定。} SDS 可以从 Prompt 生成可辨识主体，但使用轻量公开扩散模型后，纹理和局部结构细节明显弱于大模型。mesh exporter 的空等值面问题表明密度场峰值和导出阈值不匹配；采用密度采样点云后可以保留真实优化结果，但表面连续性弱于显式 mesh。
+
+\textbf{单图到 3D 保留主视角外观，但背面依赖先验。} Zero123 XL 能利用单图外观生成多视角约束，正面颜色和轮廓更接近输入图像；遮挡区域和背面几何主要依赖扩散先验，因此完整性和真实性弱于多视角重建。
+
+\textbf{融合质量取决于统一表达。} A/背景使用 3DGS PLY，B/C 使用隐式体场采样点云。将四者归一化为点/高斯式渲染表达后，可避免 mesh、NeRF 和 3DGS 表示不一致导致的渲染接口冲突，但点云资产在遮挡边界和表面连续性上仍逊于高质量 mesh 或完整 3DGS。
+
+\begin{table}[t]
+  \centering
+  \caption{三种资产生成方式的实验观察。}
+  \label{tab:compare}
+  \small
+  \begin{tabularx}{\columnwidth}{@{}l X X@{}}
+    \toprule
+    方式 & 优点 & 局限 \\
+    \midrule
+    视频 + COLMAP + 3DGS & 几何真实、视角一致性强 & 需要足够视角和清晰纹理 \\
+    文本 + SDS & 开放类别生成，不依赖拍摄 & 细节受扩散模型和训练步数限制 \\
+    单图 + Zero123 & 输入成本低，保留主视角外观 & 背面与遮挡区域依赖先验 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{外部链接}
+\begin{table}[h]
+  \centering
+  \caption{提交外部链接。}
+  \label{tab:links}
+  \small
+  \begin{tabularx}{\columnwidth}{@{}l X@{}}
+    \toprule
+    项目 & 链接 \\
+    \midrule
+    GitHub Public Repository & \repo \\
+    模型权重与关键产物网盘 & \cloud \\
+    提取码 & 6666 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{结论}
+本实验完成了题目一要求的多源资产生成与真实场景融合流程。结果表明，多视角视频重建在几何可信度上最好，文本到 3D 具有开放类别生成能力但细节稳定性较弱，单图到 3D 输入成本最低但背面补全依赖先验。统一点/高斯式表达后，三类资产可以与真实背景 3DGS 共同渲染，形成可提交的多视角漫游视频。
+
+\begin{thebibliography}{9}
+\bibitem{kerbl2023gaussian}
+Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis.
+\newblock 3D Gaussian Splatting for Real-Time Radiance Field Rendering.
+\newblock ACM TOG, 2023. \url{https://arxiv.org/abs/2308.04079}
+
+\bibitem{schoenberger2016sfm}
+Johannes L. Schönberger and Jan-Michael Frahm.
+\newblock Structure-from-Motion Revisited.
+\newblock CVPR, 2016. \url{https://demuc.de/papers/schoenberger2016sfm.pdf}
+
+\bibitem{poole2022dreamfusion}
+Ben Poole, Ajay Jain, Jonathan T. Barron, and Ben Mildenhall.
+\newblock DreamFusion: Text-to-3D using 2D Diffusion.
+\newblock ICLR, 2023. \url{https://arxiv.org/abs/2209.14988}
+
+\bibitem{liu2023zero123}
+Ruoshi Liu, Rundi Wu, Basile Van Hoorick, Pavel Tokmakov, Sergey Zakharov, and Carl Vondrick.
+\newblock Zero-1-to-3: Zero-shot One Image to 3D Object.
+\newblock ICCV, 2023. \url{https://arxiv.org/abs/2303.11328}
+
+\bibitem{threestudio2023}
+threestudio contributors.
+\newblock threestudio: A Modular Framework for Diffusion-Guided 3D Generation.
+\newblock ICCV AI3DCC Workshop, 2023. \url{https://github.com/threestudio-project/threestudio}
+
+\bibitem{knapitsch2017tanks}
+Arno Knapitsch, Jaesik Park, Qian-Yi Zhou, and Vladlen Koltun.
+\newblock Tanks and Temples: Benchmarking Large-Scale Scene Reconstruction.
+\newblock ACM TOG, 2017. \url{https://www.tanksandtemples.org/}
+
+\bibitem{wandbdocs}
+Weights \& Biases.
+\newblock Experiment Tracking Documentation.
+\newblock \url{https://docs.wandb.ai/models/track}
+\end{thebibliography}
+
+\end{document}

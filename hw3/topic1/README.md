@@ -170,7 +170,7 @@ conda run -n zl2 python scripts/export_wandb_charts.py
 conda run -n zl2 python scripts/make_report.py
 ```
 
-报告源文件为 `reports/hw3_topic1_report.md`，PDF 版本为 `reports/hw3_topic1_report.pdf`。
+报告源文件为 `reports/hw3_topic1_report.tex` 和 `reports/hw3_topic1_report.md`，PDF 版本为 `reports/hw3_topic1_report.pdf`。
 
 ## 日志
 

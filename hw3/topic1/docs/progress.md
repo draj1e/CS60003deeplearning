@@ -20,7 +20,7 @@
 | 物体 C 生成 | done | `assets/object_c/object_c_zero123_points.ply` |
 | 背景场景 | done | `outputs/3dgs_background_train/point_cloud/iteration_2000/point_cloud.ply` |
 | 融合渲染 | done | `outputs/renders/fusion_real_multisource_render.mp4` |
-| 报告与 README | done | `README.md`, `reports/hw3_topic1_report.pdf`, `reports/hw3_topic1_report.md` |
+| 报告与 README | done | `README.md`, `reports/hw3_topic1_report.pdf`, `reports/hw3_topic1_report.tex`, `reports/hw3_topic1_report.md` |
 
 ## 环境记录
 
@@ -87,6 +87,7 @@
 - 2026-06-24：更新真实版 README、提交核对表和 PDF 报告 `reports/hw3_topic1_report.pdf`。
 - 2026-06-24：新增题目一 Markdown 报告源文件 `reports/hw3_topic1_report.md`，并将正式网盘提交包统一为 `submit/hw3_topic1_netdisk_core.zip`。
 - 2026-06-24：补充 README 中的第三方代码准备说明，明确 GitHub 不上传 `third_party/` 时的复现前置步骤。
+- 2026-06-24：按正式实验报告要求新增双栏 LaTeX 报告源 `reports/hw3_topic1_report.tex`，加入中文作者信息、外部链接和参考文献。
 
 ## 验证记录
 

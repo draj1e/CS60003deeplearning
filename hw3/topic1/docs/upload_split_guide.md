@@ -12,6 +12,7 @@ GitHub 放代码、文档、小图和报告，不放大权重/大数据/训练�
 - `requirements.txt`
 - `scripts/`
 - `docs/`
+- `reports/hw3_topic1_report.tex`
 - `reports/hw3_topic1_report.md`
 - `reports/hw3_topic1_report.pdf`
 - `reports/wandb_loss_curves.png`
@@ -47,7 +48,7 @@ GitHub 放代码、文档、小图和报告，不放大权重/大数据/训练�
 
 该 zip 包包含：
 
-- 报告 PDF、报告 Markdown 源文件、README、环境文件、脚本、docs
+- 报告 PDF、LaTeX/Markdown 报告源文件、README、环境文件、脚本、docs
 - 手机输入素材
 - A 的 3DGS 点云
 - B 的 SDS checkpoint、测试视频、导出点云

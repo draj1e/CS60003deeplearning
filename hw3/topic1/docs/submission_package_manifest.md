@@ -3,6 +3,7 @@
 ## 必交文档
 
 - `reports/hw3_topic1_report.pdf`
+- `reports/hw3_topic1_report.tex`
 - `reports/hw3_topic1_report.md`
 - `README.md`
 - `environment.yml`
